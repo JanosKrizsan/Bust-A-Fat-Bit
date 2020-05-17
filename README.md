@@ -24,6 +24,7 @@ Before being used to calculate the corresponding result, each game hash is salte
 [Convert Bits to Fiat](https://youmeandbtc.com/bitcoin-converter/convert-btc-mbtc-bits-satoshis-usd/)
 
 # Betting Strategies
+
 ## Oscar's Grind
 Oscar's Grind is a betting strategy used by gamblers on wagers where the outcome is evenly distributed between two results of equal value (like flipping a coin, betting on red or black in roulette, etc.). It is an archetypal positive progression strategy. It is also called Hoyle's Press. In German and French it is often referred to as the Pluscoup Progression. It was first documented by Allan Wilson in his 1965 book,The Casino Gambler's Guide. This progression is based on calculating the size of bets so that in the event of a losing streak, if and when a same-length winning streak occurs, a profit is obtained. The main concept is that there are periods of many wins and periods of many losses. Losses and wins often come in streaks. Ideally, bets are kept low on losing streaks and increased on winning streaks, which hopefully will follow.
 
@@ -52,6 +53,7 @@ The gambler's fallacy, also known as the Monte Carlo fallacy or the fallacy of t
 [Wiki](https://en.wikipedia.org/wiki/Gambler%27s_fallacy)
 
 ## Our Strategy
+
 We will stick with the Gambler's Fallacy and believe in randomness. We are unable to predict the numbers coming up, and even the currently available 50 we have at our disposal is useless in determining it. Remember, anything under our multiplier will make us lose our bet, thus we must choose our multiplier and bet carefully. The Martingale strategy seems to show okay-ish results, however upon entering a loss-streak (consequent lossses) of over 20, even a low initial bet of 3, will bankrupt most players. To stay in the game longer (and recover our losses), we need a higher balance, relativiely low multiplier, and the lowest possible initial bet.
 
 To calculate your desired setup, you can use the function included in a separate .js file. Please note, it follows a Martingale style bet-multiplication.
@@ -84,6 +86,14 @@ function tresholdBoundary(num, multip, rounds, balance) {
   console.log("Your balance would be ", + bal + ".");
 }
 ```
+
+## Numbers
+
+If one wishes to go for a higher return with faster gains, it is better to set a 1.1x multiplier so we would get an 89% win chance. However, for this we would need a higher bet as well, because we would get 10% of our bet as profit. So for us to gain 1000 bits, we would need to wager 10.000 bits. Upon losing a round we would need to increase out bet by at least 2 to account for the loss plus profit. This strategy could be better managed than others, however we need a high amount of initial funds to work with bigger bets.
+
+Another popular strategy is a simple Martingale with our numbers above. We set our bet to 0.005% of the initial funds. This means, we bet 5 bits if we have 100.000 bits as our balance. We set a 3.43x multiplier, thus we win 28-32% of the time and upon each loss we multiply our next bet by 1.42. By this, we recover all our losses and get an increased amount on a win. However, one must know that we could lose most of our funds (without a stop-loss) within 30 rounds with this strategy. It is essentially a slow crawl.
+
+With all strategies, the lower your bet is and the higher your balance the less of a chance you face you will lose everything.
 
 # Features 📝
 
@@ -121,14 +131,36 @@ To seem at least not addicted to gambling.<br>
 
 Everybody loves fun and comfort.<br>
 - Name me, me! | we could set a specific username, but if non available, it will use our account name ⚙️
-- Toggle all Be all | you can toggle all options on/off with the "I want extra options" tab ⚙️
+- Toggle all Be all | you can toggle all options on/off with the "I want extra options" switch ⚙️
 - I am picky | You can toggle specific settings on/off by setting the value to 0 ⚙️
 
 A note:<br>
-Setting the value of any Rest option to 0 will autmatically disable the whole feature, as it would render it pointless.
+Setting the value of any REST option to 0 will autmatically disable the whole feature, as it would render it pointless.
 
 # Setting Up 📲
 
+1. Go to `bustabit.com/play`
+2. Register a new username, and make sure to save your details
+3. For extra safety add your e-mail address
+4. Click on `Auto` and remove other scripts (so mistakes are avoided)
+![Auto](https://i.imgur.com/9hiRbhz.png)
+5. Click `New` and fill in the name (whatever you want)
+6. Copy-paste the script file's contents to the lower 
+![Edit](https://imgur.com/06tqqKh.png)
+7. Click "Create Script" which saves it
+
+# Usage
+
+- Please read above for each option available and what they do
+- Set it up as you wish, it is yours to play with!
+- To run, simply click the `Run Script` button on the bottom
+- You can try it by running it in `Simulation Mode`, this will help to test your strategy
+![Menu](https://imgur.com/wmnQUD3.png)
+
 # Development ⌨️
 
+It was developed without any help. No help was provided by any IDEs or any checkers. The iFrame makes it impossible to use certain functions, and it disables newer JS features. You are unable to use, for example, foreach or lambda functions.
+
 ## Debugging
+
+Debugging was done within the iFrame for the highest possible compatibility. This came with its own frustration, however a successful end-result was achieved.
