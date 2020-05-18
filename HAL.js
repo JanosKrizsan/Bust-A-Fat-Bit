@@ -27,22 +27,23 @@ var config =
     value: 5, type: 'text', label: 'Notify when X rounds before stop set'
   },
   stopPercent: {
-    value: 10, type: 'text', label: 'Stop if percentage of capital lost'
+    value: 15, type: 'text', label: 'Stop if percentage of capital lost'
   },
   stopAmount: {
     value: 8000, type: 'text', label: 'Stop if current bet is gt/eq'
   },
+  isRestSet: {value: true, type: 'checkbox', label: 'I want some rest too' },
   startRestWhen: {
-    value: 1, type: 'text', label: 'Rest after input floor (mins)'
+    value: 180, type: 'text', label: 'Rest after input floor (mins)'
   },
   stopRestWhen: {
-    value: 5, type: 'text', label: 'Rest after input ceiling (mins)'
+    value: 240, type: 'text', label: 'Rest after input ceiling (mins)'
   },
   restFromMinutes: {
-    value: 1, type: 'text', label: 'Rest dur. input floor (mins)'
+    value: 15, type: 'text', label: 'Rest dur. input floor (mins)'
   },
   restTillMinutes: {
-    value: 5, type: 'text', label: 'Rest dur. input ceiling (mins)'
+    value: 30, type: 'text', label: 'Rest dur. input ceiling (mins)'
   },
   clearCons: {
     value: 5, type: 'text', label: 'Clear console every X round'
@@ -55,7 +56,9 @@ var currentBet = config.baseBet.value;
 var lossesRow = 0;
 var winsStart = 0;
 var timeReset = false;
+var isResting = false;
 var scriptStartTime = new Date();
+var isAnyRestSet = config.isRestSet.value;
 var dispName = config.userName.value === 'user' ? userInfo.uname : config.userName.value;
 
 function checkVar(elem) {
@@ -66,7 +69,7 @@ function checkVars(varList) {
   for (var i = 0; i < varList.length; i++) {
     varList[i] = checkVar(varList[i]);
     if (!varList[i]) {
-      return false;
+      return varList[i];
     }
   }
   return varList;
@@ -93,40 +96,46 @@ if (toggleExtras) {
   var startBalance = userInfo.balance;
   var restInterval = checkVars([config.startRestWhen.value, config.stopRestWhen.value]);
   var restDurationInterval = checkVars([config.restFromMinutes.value, config.restTillMinutes.value]);
+  
+  if (!typeCheck(restInterval) || !typeCheck(restDurationInterval)) {
+    isAnyRestSet = false;
+  } else {
+    var waitForRestTime = new Date();
+    waitForRestTime.setMinutes(waitForRestTime.getMinutes() + getRandomMins(restInterval[0], restInterval[1]));
+    var restDuration = getRandomMins(restDurationInterval[0], restDurationInterval[1]);
+  }
 }
 
 console.log('HAL started at: ', scriptStartTime);
 console.log('Here come the numbers ' + dispName.toUpperCase() + '...');
 
-function betBits() {
-  var bits = roundBits(currentBet);
-  engine.bet(roundBits(currentBet), config.payout.value);
-  return bits / 100;
-}
-
 function roundBits(betVal) {
   return Math.round(betVal / 100) * 100;
+}
+
+function betBits() {
+  if (!isResting) {
+    var bits = roundBits(currentBet);
+    engine.bet(roundBits(currentBet), config.payout.value);
+    return bits / 100;
+  }
+  return "none, I am resting";
 }
 
 function getRandomMins(start, end) {
   return Math.floor(Math.random() * (end - start + 1) + start);
 }
 
+
+
 function resetTimes() {
-  console.log('resettimes');
   if (typeCheck(restInterval)) {
-    console.log('Resettimes true');
-    waitForRestTime = getRandomMins(restInterval[0], restInterval[1]);
+    waitForRestTime = new Date();
+    waitForRestTime.setMinutes(waitForRestTime.getMinutes() + getRandomMins(restInterval[0], restInterval[1]));
+    restDuration = getRandomMins(restDurationInterval[0], restDurationInterval[1]);
     scriptStartTime = new Date();
     timeReset = true;
   }
-}
-
-if (!ypeCheck(restInterval) || !typeCheck(restDurationInterval)) {
-  console.log('waitforresttime false');
-  var waitForRestTime = getRandomMins(restInterval[0], restInterval[1]);
-  var restStart = restDurationInterval[0];
-  var restEnd = restDurationInterval[1];
 }
 
 function alertOfPotentials() {
@@ -147,7 +156,7 @@ function alertOfPotentials() {
 
 function getTimeDiff(dateStart, dateGiven) {
   var milsecDiff = Math.abs(dateStart - dateGiven);
-  var minuteDiff = Math.ceil(milsecDiff / (1000 * 60));
+  var minuteDiff = Math.ceil(milsecDiff / 60000);
   return minuteDiff;
 }
 
@@ -160,24 +169,22 @@ function isConsoleToClear() {
   }
 
 function assessIsRest(minuteDiff) {
-  console.log('assess is rest time');
-  return minuteDiff >= waitForRestTime;
+  var currentTime = getTimeDiff(scriptStartTime, new Date());
+  return minuteDiff === currentTime;
 }
 
 function restCheck() {
-  console.log('rest check');
-  return assessIsRest(getTimeDiff(scriptStartTime, new Date()));
+  return assessIsRest(getTimeDiff(scriptStartTime, waitForRestTime));
 }
 
-function assessIsBeforeRest(minuteDiff) {
-  console.log('assess is before rest');
+function assessAfterRestCheck(minuteDiff) {
   var currentTime = getTimeDiff(scriptStartTime, new Date());
-  return currentTime < minuteDiff;
+  minuteDiff += restDuration;
+  return currentTime > minuteDiff;
 }
 
-function beforeRestCheck() {
-  console.log('before rest check');
-  return assessIsBeforeRest(getTimeDiff(scriptStartTime, waitForRestTime));
+function afterRestCheck() {
+  return assessAfterRestCheck(getTimeDiff(scriptStartTime, waitForRestTime));
 }
 
 function stopExec(message) {
@@ -226,7 +233,7 @@ function tresholdCheck() {
 }
 
 function assessAnyRestIsSet() {
-  return !(!restDurationInterval || !restInterval);
+  return isAnyRestSet;
 }
 
 function assessAfterRest() {
@@ -237,8 +244,9 @@ function assessAfterRest() {
   return false;
 }
 
-function Rest() {
-  engine.listeners().pop();
+function rest() {
+  isResting = true;
+  return restDuration;
 }
 
 function getLastGame() {
@@ -274,7 +282,7 @@ function gamePlay() {
       returnToBaseBet(currentBet);
     } else {
       currentBet *= config.win.options.increase.value;
-      increaseCurrentBetBy(currentBet, config.win.options.increase.value, lastGame)
+      increaseCurrentBetBy(currentBet, config.win.options.increase.value, lastGame);
     }
     winsStart += 1;
     console.log('Wins, since start: ', winsStart);
@@ -284,7 +292,7 @@ function gamePlay() {
       returnToBaseBet(currentBet);
     } else {
       currentBet *= config.loss.options.increase.value;
-      increaseCurrentBetBy(currentBet, config.loss.options.increase.value, lastGame)
+      increaseCurrentBetBy(currentBet, config.loss.options.increase.value, lastGame);
     }
     lossesRow += 1;
     console.log('Losses in a row: ', lossesRow);
@@ -297,10 +305,9 @@ function gamePlay() {
     }
   }
   if (lastWagerCheck(lastGame)) {
-    //console.log("Previous bet unsuccessful, we just missed the time-frame.");
     return;
   }
-  console.log('Tried to wager ' + betBits() + ' this round.');
+  console.log('Trying to wager ' + betBits() + ' this round.');
   alertOfPotentials();
 }
 
@@ -309,27 +316,18 @@ function toggleGamePlay() {
     gamePlay();
   } else {
     if (assessAnyRestIsSet()) {
-      if (beforeRestCheck()) {
-        gamePlay();
+      if (restCheck() &&!isResting) {
+        console.log('Rest started:\n  Rest will go on for: ' + rest() + ' minutes');
         return;
       }
-      if (restCheck()) {
-        Rest();
-        resetTimes();
-        var restDuration = getRandomMins(restStart, restEnd);
-        console.log('Rest started:\n  Rest will go on for: ', restDuration, ' minutes');
-        setTimeout(Start, restDuration);
-        return;
-      }
-      else if (afterRestCheck()) {
+      else if (afterRestCheck() && isResting) {
         console.log('Rest finished, continuing...');
-        engine.addListener('GAME_ENDED', toggleGamePlay);
+        resetTimes();
+        isResting = false;
       }
-      gamePlay();
     }
+    gamePlay();
   }
 }
 
 engine.addListener('GAME_ENDED', toggleGamePlay);
-
-
